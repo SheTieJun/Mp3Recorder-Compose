@@ -1,18 +1,33 @@
 ## MP3Recorder 提供Compose 支持（实验性）
 
+### Compose Version
+```
 compose_version = '1.2.0-alpha07'
+```
+
+### 创建Mp3Recorder
 
 ```
-   val recordStateInfo = rememberRecorderState() { isAutoComplete, file ->
+   val mp3Recorder = rememberRecorderState() { isAutoComplete, file ->
         Log.i("rememberRecorderState", "isAutoComplete = $isAutoComplete || file = $file")
    }
 ```
 
-## 录制时间
+### 录制时间
 ```
 Text(
-  text = formatSeconds4(recordStateInfo.recordTime.value),
+  text = formatSeconds4(mp3Recorder.recTime),
 )
+```
+
+### 录音状态
+```
+mp3Recorder.state
+```
+
+### 背景音乐的状态
+```
+mp3Recorder.state
 ```
 
 ## 相关参数
@@ -25,3 +40,8 @@ Text(
     val bgmDuration: MutableState<Int>, //背景音乐总时长
     val bgmTime: MutableState<Int>,//背景音乐播放的时长
 ```
+
+
+## DEMO  TODO
+- [ ] 背景音乐
+- [ ] 历史记录

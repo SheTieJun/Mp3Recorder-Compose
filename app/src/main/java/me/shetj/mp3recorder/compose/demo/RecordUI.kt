@@ -61,19 +61,19 @@ import me.shetj.recorder.compose.rememberRecorderState
 @Composable
 fun RecordUI(modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    val recordStateInfo = rememberRecorderState() { isAutoComplete, file ->
+    val mp3Recorder = rememberRecorderState() { isAutoComplete, file ->
         Log.i("rememberRecorderState", "isAutoComplete = $isAutoComplete || file = $file")
-        Toast.makeText(context,"录制完成：$file",Toast.LENGTH_LONG).show()
+        Toast.makeText(context, "录制完成：$file", Toast.LENGTH_LONG).show()
     }
 
     val isShowDialog = remember {
         mutableStateOf(false)
     }
 
-    val isRecordError = recordStateInfo.state is RecordError
+    val isRecordError = mp3Recorder.state is RecordError
 
+    val needPermis = mp3Recorder.state == RecordPermission
 
-    val needPermis = recordStateInfo.state == RecordPermission
     if (isRecordError || needPermis) {
         isShowDialog.value = true
     }
@@ -97,7 +97,7 @@ fun RecordUI(modifier: Modifier = Modifier) {
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = formatSeconds4(recordStateInfo.recTime),
+                    text = formatSeconds4(mp3Recorder.recTime),
                     fontFamily = font_noto_sans,
                     style = MaterialTheme.typography.displayLarge
                 )
@@ -113,18 +113,18 @@ fun RecordUI(modifier: Modifier = Modifier) {
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 RecordImageView(
-                    recordState = recordStateInfo.state, modifier = Modifier
-                        .size(64.dp)
-
+                    recordState = mp3Recorder.state,
+                    modifier = Modifier.size(64.dp)
                 ) {
-                    recordStateInfo.startOrPause(file)
+                    mp3Recorder.startOrPause(file)
                 }
 
-                if (recordStateInfo.isActive){
-                    CompleteImage(modifier = Modifier
-                        .size(64.dp)
-                    ){
-                        recordStateInfo.complete()
+                if (mp3Recorder.isActive) {
+                    CompleteImage(
+                        modifier = Modifier
+                            .size(64.dp)
+                    ) {
+                        mp3Recorder.complete()
                     }
                 }
             }
@@ -134,7 +134,8 @@ fun RecordUI(modifier: Modifier = Modifier) {
 
 @Composable
 fun CompleteImage(modifier: Modifier = Modifier, onClick: () -> Unit) {
-    Image(painter = painterResource(R.mipmap.icon_record_save),
+    Image(
+        painter = painterResource(R.mipmap.icon_record_save),
         contentDescription = "record state",
         modifier = modifier
             .background(Color(0xFFf5f5f5.toInt()), shape = CircleShape)
@@ -142,12 +143,13 @@ fun CompleteImage(modifier: Modifier = Modifier, onClick: () -> Unit) {
             .clickable {
                 onClick.invoke()
             },
-    contentScale = ContentScale.Inside)
+        contentScale = ContentScale.Inside
+    )
 
 }
 
 @Composable
-fun RecordImageView(recordState:  RecorderState, modifier: Modifier = Modifier, onClick: () -> Unit) {
+fun RecordImageView(recordState: RecorderState, modifier: Modifier = Modifier, onClick: () -> Unit) {
 
     val painterResource = painterResource(
         when (recordState) {
@@ -190,42 +192,46 @@ private fun getTwoDecimalsValue(value: Int): String {
 @Composable
 fun ShowRecordPermissionDialog(openDialog: MutableState<Boolean>) {
 
-    val cameraPermissionState = rememberMultiplePermissionsState(
-        listOf(permission.RECORD_AUDIO)
-    )
 
     if (!openDialog.value) {
         return
     }
 
+    val cameraPermissionState = rememberMultiplePermissionsState(
+        listOf(permission.RECORD_AUDIO)
+    )
+
     AlertDialog(
         onDismissRequest = {
             openDialog.value = false
         },
-//        icon = { Icon(Icons.Filled.Camera, contentDescription = null) },
         title = {
             Text(text = "获取权限")
         },
         text = {
-            val textToShow = if (cameraPermissionState.allPermissionsGranted) {
-                "The Record audio permission is granted"
-            } else if (cameraPermissionState.shouldShowRationale) {
-                // If the user has denied the permission but the rationale can be shown,
-                // then gently explain why the app requires this permission
-                "The Record audio is important for this app. Please grant the permission."
-            } else {
-                // If it's the first time the user lands on this feature, or the user
-                // doesn't want to be asked again for this permission, explain that the
-                // permission is required
-                buildString {
-                    cameraPermissionState.revokedPermissions.forEach {
-                        append(it.permission)
-                        append(" ")
+            val textToShow = when {
+                cameraPermissionState.allPermissionsGranted -> {
+                    "The Record audio permission is granted"
+                }
+                cameraPermissionState.shouldShowRationale -> {
+                    // If the user has denied the permission but the rationale can be shown,
+                    // then gently explain why the app requires this permission
+                    "The Record audio is important for this app. Please grant the permission."
+                }
+                else -> {
+                    // If it's the first time the user lands on this feature, or the user
+                    // doesn't want to be asked again for this permission, explain that the
+                    // permission is required
+                    buildString {
+                        cameraPermissionState.revokedPermissions.forEach {
+                            append(it.permission)
+                            append(" ")
+                        }
+                        append(
+                            " required for this feature to be available. " +
+                                    "Please grant the permission"
+                        )
                     }
-                    append(
-                        " required for this feature to be available. " +
-                                "Please grant the permission"
-                    )
                 }
             }
             Text(textToShow)

@@ -125,9 +125,11 @@ class Mp3RecorderState(
      */
     val bgDuration by bgmDuration
 
-
-
-
+    /**
+     * 录音工作中包括状态赞同，录音线程存活
+     */
+    val isActive: Boolean
+        get() = mRecorder.isActive
 
     private val playerListener = object : PlayerListener {
         override fun onCompletion() {
@@ -158,24 +160,6 @@ class Mp3RecorderState(
         override fun onStop() {
             isPlayIngBgm.value = BGMStop
         }
-    }
-
-    //录音线程是否存活
-    val isActive: Boolean
-        get() = mRecorder.isActive
-
-
-    private val mRecorder: BaseRecorder = recorder {
-        mMaxTime = 60 * 60 * 1000
-        isDebug = true
-        wax = 1f
-        samplingRate = 44100
-        audioSource = MediaRecorder.AudioSource.MIC
-        audioChannel = 2
-        recordListener = this@Mp3RecorderState
-        permissionListener = this@Mp3RecorderState
-    }.buildMix(context).also {
-        it.setBackgroundMusicListener(playerListener)
     }
 
     fun reset() {
@@ -237,6 +221,21 @@ class Mp3RecorderState(
             mRecorder.startPlayMusic()
         }
     }
+
+
+    private val mRecorder: BaseRecorder = recorder {
+        mMaxTime = 60 * 60 * 1000
+        isDebug = true
+        wax = 1f
+        samplingRate = 44100
+        audioSource = MediaRecorder.AudioSource.MIC
+        audioChannel = 2
+        recordListener = this@Mp3RecorderState
+        permissionListener = this@Mp3RecorderState
+    }.buildMix(context).also {
+        it.setBackgroundMusicListener(playerListener)
+    }
+
 
     override fun needPermission() {
         recorderState.value = RecordPermission
