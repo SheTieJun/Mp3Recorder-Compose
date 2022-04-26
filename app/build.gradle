@@ -1,0 +1,107 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    compileSdk 31
+
+    defaultConfig {
+        applicationId "me.shetj.mp3recorder.compose.demo"
+        minSdk 21
+        targetSdk 31
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        vectorDrawables {
+            useSupportLibrary true
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+
+    kotlinOptions {
+        jvmTarget = '11'
+    }
+
+    buildFeatures {
+        compose true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion compose_version
+    }
+    packagingOptions {
+        resources {
+            excludes += '/META-INF/{AL2.0,LGPL2.1}'
+        }
+    }
+}
+
+dependencies {
+    api 'androidx.core:core-ktx:1.7.0'
+    implementation project(path: ':recorder-compose')
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.3.1'
+    testImplementation 'junit:junit:4.+'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.3'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
+    androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"
+    debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
+
+    api "io.coil-kt:coil-compose:2.0.0-rc03" //图片加载
+
+    // Tooling support (Previews, etc.)
+    api "androidx.compose.ui:ui:$compose_version"
+    api "androidx.compose.ui:ui-tooling-preview:$compose_version"
+    api "androidx.compose.material:material:$compose_version"
+    api "androidx.compose.material:material-icons-extended:$compose_version"
+
+    api 'androidx.activity:activity-compose:1.6.0-alpha01'
+
+    // Foundation (Border, Background, Box, Image, Scroll, shapes, animations, etc.)
+    api "androidx.compose.foundation:foundation:$compose_version"
+    api "androidx.compose.animation:animation:$compose_version"
+
+    api "androidx.compose.runtime:runtime:$compose_version"
+    api "androidx.compose.runtime:runtime-livedata:$compose_version"
+
+
+    def nav_version = "2.4.1"
+    api "androidx.navigation:navigation-compose:$nav_version" //导航
+
+    def  accompanist_version = "0.24.6-alpha"
+    api "com.google.accompanist:accompanist-systemuicontroller:$accompanist_version" // 状态栏、导航栏的等控制
+    api "com.google.accompanist:accompanist-pager:$accompanist_version"
+    api "com.google.accompanist:accompanist-pager-indicators:$accompanist_version"
+    api "com.google.accompanist:accompanist-swiperefresh:$accompanist_version"
+    api "com.google.accompanist:accompanist-drawablepainter:$accompanist_version"
+    api "com.google.accompanist:accompanist-flowlayout:$accompanist_version"//瀑布流
+    api "com.google.accompanist:accompanist-permissions:$accompanist_version"//权限处理
+
+
+    // If you're using Material, use accompanist-placeholder-material
+    api "com.google.accompanist:accompanist-placeholder-material:$accompanist_version"
+    api "com.google.accompanist:accompanist-placeholder:$accompanist_version"
+    api "com.google.accompanist:accompanist-navigation-material:$accompanist_version"
+    api "com.google.accompanist:accompanist-navigation-animation:$accompanist_version"
+    api "com.google.accompanist:accompanist-webview:$accompanist_version"
+
+    api "androidx.compose.material3:material3:1.0.0-alpha09"
+
+    implementation "androidx.window:window:1.0.0-beta04"
+
+    api "androidx.core:core-splashscreen:1.0.0-beta02"
+
+
+    api "androidx.constraintlayout:constraintlayout-compose:1.0.0"
+}

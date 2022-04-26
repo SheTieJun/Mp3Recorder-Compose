@@ -1,0 +1,8 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Theme.Mp3RecorderCompose" parent="Theme.SplashScreen.IconBackground">
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/icon_jetpack_compose</item>
+        <item name="windowSplashScreenBackground">@color/white</item>
+        <item name="windowSplashScreenIconBackgroundColor">@color/white</item>
+    </style>
+</resources>
