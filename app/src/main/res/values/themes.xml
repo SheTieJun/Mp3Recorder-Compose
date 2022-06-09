@@ -4,5 +4,6 @@
         <item name="windowSplashScreenAnimatedIcon">@mipmap/icon_jetpack_compose</item>
         <item name="windowSplashScreenBackground">@color/white</item>
         <item name="windowSplashScreenIconBackgroundColor">@color/white</item>
+        <item name="android:windowNoTitle">true</item>
     </style>
 </resources>

@@ -49,7 +49,7 @@ fun DynamicTheme(
         darkTheme -> darkColorScheme()
         else -> lightColorScheme()
     }
-    BaseTheme(darkTheme, colorScheme, content)
+    BaseTheme(colorScheme, content)
 }
 
 
@@ -66,7 +66,6 @@ fun DefTheme(
 
 @Composable
 private fun BaseTheme(
-    darkTheme: Boolean,
     colors: ColorScheme,
     content: @Composable () -> Unit
 ) {

@@ -1,25 +1,26 @@
-package me.shetj.recorder.compose
+package me.shetj.compose.demo.ui.home.home_func.record
 
 import android.content.Context
 import android.media.MediaRecorder
 import android.net.Uri
 import android.text.TextUtils
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import me.shetj.compose.demo.ui.home.home_func.record.BGMState.BGMError
+import me.shetj.compose.demo.ui.home.home_func.record.BGMState.BGMIng
+import me.shetj.compose.demo.ui.home.home_func.record.BGMState.BGMPause
+import me.shetj.compose.demo.ui.home.home_func.record.BGMState.BGMStop
+import me.shetj.compose.demo.ui.home.home_func.record.RecorderState.RecordError
+import me.shetj.compose.demo.ui.home.home_func.record.RecorderState.RecordIng
+import me.shetj.compose.demo.ui.home.home_func.record.RecorderState.RecordPause
+import me.shetj.compose.demo.ui.home.home_func.record.RecorderState.RecordPermission
+import me.shetj.compose.demo.ui.home.home_func.record.RecorderState.RecordStop
 import me.shetj.player.PlayerListener
-import me.shetj.recorder.compose.BGMState.BGMError
-import me.shetj.recorder.compose.BGMState.BGMIng
-import me.shetj.recorder.compose.BGMState.BGMPause
-import me.shetj.recorder.compose.BGMState.BGMStop
-import me.shetj.recorder.compose.RecorderState.RecordError
-import me.shetj.recorder.compose.RecorderState.RecordIng
-import me.shetj.recorder.compose.RecorderState.RecordPause
-import me.shetj.recorder.compose.RecorderState.RecordPermission
-import me.shetj.recorder.compose.RecorderState.RecordStop
 import me.shetj.recorder.core.AudioUtils
 import me.shetj.recorder.core.BaseRecorder
 import me.shetj.recorder.core.PermissionListener
@@ -30,23 +31,21 @@ import me.shetj.recorder.core.RecordState.STOPPED
 import me.shetj.recorder.core.recorder
 import me.shetj.recorder.mixRecorder.buildMix
 
+
 sealed class RecorderState {
-    object RecordIng : RecorderState()  //录音进行中
-    object RecordPause : RecorderState()//录音已暂停
-    object RecordStop : RecorderState() //录音已结束
-    class RecordError(val e: Exception) : RecorderState()//录音错误
-    object RecordPermission : RecorderState()//录音需要权限申请
+    object RecordIng : RecorderState()
+    object RecordPause : RecorderState()
+    object RecordStop : RecorderState()
+    class RecordError(val e: Exception) : RecorderState()
+    object RecordPermission : RecorderState()
 }
 
 
-/**
- * TODO 测试背景音乐
- */
 sealed class BGMState {
     object BGMIng : BGMState()
     object BGMPause : BGMState()
     object BGMStop : BGMState()
-    class BGMError(val e: Exception) : BGMState()
+    class BGMError(val e: Exception?) : BGMState()
 }
 
 @Composable
@@ -76,67 +75,25 @@ fun rememberRecorderState(
     }
 }
 
-
+@Stable
 class Mp3RecorderState(
     context: Context,
-    private val recorderState: MutableState<RecorderState>, //录音状态
-    private  val recordTime: MutableState<Long>, //录音时间的长度
-    private  val currentVolume: MutableState<Int>, //当前声音大小
-    private val maxTime: MutableState<Int>,//最大录制时间
-    private val isPlayIngBgm: MutableState<BGMState>, //背景音乐的状态
-    private  val bgmDuration: MutableState<Int>, //背景音乐总时长
-    private val bgmTime: MutableState<Int>,//背景音乐播放的时长
+    val recorderState: MutableState<RecorderState>, //录音状态
+    val recordTime: MutableState<Long>, //录音时间的长度
+    val currentVolume: MutableState<Int>, //当前声音大小
+    val maxTime: MutableState<Int>,//最大录制时间
+    val isPlayIngBgm: MutableState<BGMState>, //背景音乐的状态
+    val bgmDuration: MutableState<Int>, //背景音乐总时长
+    val bgmTime: MutableState<Int>,//背景音乐播放的时长
     private val onSucceed: (isAutoComplete: Boolean, file: String) -> Unit
 ) : RecordListener, PermissionListener {
-
-
-    /**
-     * 录音状态
-     */
-    val state by recorderState
-
-    /**
-     * 录音时间的长度
-     */
-    val recTime by recordTime
-
-    /**
-     * 当前录制声音大小
-     */
-    val volume by currentVolume
-
-    /**
-     * 时间限制
-     */
-    val timeLimit by maxTime
-
-    /**
-     * 背景音乐的状态
-     */
-    val bgmState by isPlayIngBgm
-
-    /**
-     * 背景音乐已播放声音
-     */
-    val bgTime by bgmTime
-
-    /**
-     * 背景音乐的长度
-     */
-    val bgDuration by bgmDuration
-
-    /**
-     * 录音工作中包括状态赞同，录音线程存活
-     */
-    val isActive: Boolean
-        get() = mRecorder.isActive
 
     private val playerListener = object : PlayerListener {
         override fun onCompletion() {
             isPlayIngBgm.value = BGMStop
         }
 
-        override fun onError(throwable: Exception) {
+        override fun onError(throwable: Exception?) {
             isPlayIngBgm.value = BGMError(throwable)
         }
 
@@ -160,6 +117,23 @@ class Mp3RecorderState(
         override fun onStop() {
             isPlayIngBgm.value = BGMStop
         }
+    }
+
+    val isActive: Boolean
+        get() = mRecorder.isActive
+
+
+    private val mRecorder: BaseRecorder = recorder {
+        mMaxTime = 60 * 60 * 1000
+        isDebug = true
+        wax = 1f
+        samplingRate = 44100
+        audioSource = MediaRecorder.AudioSource.MIC
+        audioChannel = 2
+        recordListener = this@Mp3RecorderState
+        permissionListener = this@Mp3RecorderState
+    }.buildMix(context).also {
+        it.setBackgroundMusicListener(playerListener)
     }
 
     fun reset() {
@@ -189,8 +163,20 @@ class Mp3RecorderState(
         }
     }
 
+    fun pause(){
+        mRecorder.pause()
+    }
+
+    fun resume(){
+        mRecorder.resume()
+    }
+
     fun complete() {
         mRecorder.complete()
+    }
+
+    fun destroy(){
+        mRecorder.destroy()
     }
 
     fun setBackGroundUrl(context: Context?, url: Uri) {
@@ -206,7 +192,7 @@ class Mp3RecorderState(
         }
     }
 
-    fun updateMaxTime(maxTime: Int) {
+    fun updateMaxTime(maxTime: Long) {
         mRecorder.setMaxTime(maxTime)
     }
 
@@ -221,21 +207,6 @@ class Mp3RecorderState(
             mRecorder.startPlayMusic()
         }
     }
-
-
-    private val mRecorder: BaseRecorder = recorder {
-        mMaxTime = 60 * 60 * 1000
-        isDebug = true
-        wax = 1f
-        samplingRate = 44100
-        audioSource = MediaRecorder.AudioSource.MIC
-        audioChannel = 2
-        recordListener = this@Mp3RecorderState
-        permissionListener = this@Mp3RecorderState
-    }.buildMix(context).also {
-        it.setBackgroundMusicListener(playerListener)
-    }
-
 
     override fun needPermission() {
         recorderState.value = RecordPermission
@@ -254,6 +225,7 @@ class Mp3RecorderState(
     }
 
     override fun onRecording(time: Long, volume: Int) {
+        Log.i("onRecording",time.toString())
         recordTime.value = time
         currentVolume.value = volume
     }

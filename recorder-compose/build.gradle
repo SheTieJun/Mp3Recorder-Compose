@@ -44,8 +44,8 @@ android {
 
 dependencies {
     implementation "androidx.compose.foundation:foundation:$compose_version"
-    api "com.github.SheTieJun.Mp3Recorder:recorder-core:1.7.1"
-    api "com.github.SheTieJun.Mp3Recorder:recorder-mix:1.7.1"
+    api "com.github.SheTieJun.Mp3Recorder:recorder-core:1.7.3"
+    api "com.github.SheTieJun.Mp3Recorder:recorder-mix:1.7.3"
     implementation 'androidx.core:core-ktx:1.7.0'
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'

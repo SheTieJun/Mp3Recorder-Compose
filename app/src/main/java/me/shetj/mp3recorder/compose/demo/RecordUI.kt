@@ -31,6 +31,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,19 +41,22 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle.Event.ON_STOP
+import androidx.lifecycle.LifecycleEventObserver
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
+import me.shetj.compose.demo.ui.home.home_func.record.RecorderState
+import me.shetj.compose.demo.ui.home.home_func.record.RecorderState.RecordError
+import me.shetj.compose.demo.ui.home.home_func.record.RecorderState.RecordIng
+import me.shetj.compose.demo.ui.home.home_func.record.RecorderState.RecordPause
+import me.shetj.compose.demo.ui.home.home_func.record.RecorderState.RecordPermission
+import me.shetj.compose.demo.ui.home.home_func.record.RecorderState.RecordStop
+import me.shetj.compose.demo.ui.home.home_func.record.rememberRecorderState
 import me.shetj.mp3recorder.compose.demo.ui.theme.font_noto_sans
-import me.shetj.recorder.compose.RecorderState
-import me.shetj.recorder.compose.RecorderState.RecordError
-import me.shetj.recorder.compose.RecorderState.RecordIng
-import me.shetj.recorder.compose.RecorderState.RecordPause
-import me.shetj.recorder.compose.RecorderState.RecordPermission
-import me.shetj.recorder.compose.RecorderState.RecordStop
-import me.shetj.recorder.compose.rememberRecorderState
 
 
 @ExperimentalPermissionsApi
@@ -61,6 +65,7 @@ import me.shetj.recorder.compose.rememberRecorderState
 @Composable
 fun RecordUI(modifier: Modifier = Modifier) {
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     val mp3Recorder = rememberRecorderState() { isAutoComplete, file ->
         Log.i("rememberRecorderState", "isAutoComplete = $isAutoComplete || file = $file")
         Toast.makeText(context, "录制完成：$file", Toast.LENGTH_LONG).show()
@@ -70,13 +75,14 @@ fun RecordUI(modifier: Modifier = Modifier) {
         mutableStateOf(false)
     }
 
-    val isRecordError = mp3Recorder.state is RecordError
+    val isRecordError = mp3Recorder.recorderState.value is RecordError
 
-    val needPermis = mp3Recorder.state == RecordPermission
 
+    val needPermis = mp3Recorder.recorderState.value == RecordPermission
     if (isRecordError || needPermis) {
         isShowDialog.value = true
     }
+
 
     ShowRecordPermissionDialog(isShowDialog)
 
@@ -97,7 +103,7 @@ fun RecordUI(modifier: Modifier = Modifier) {
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = formatSeconds4(mp3Recorder.recTime),
+                    text = formatSeconds4(mp3Recorder.recordTime.value),
                     fontFamily = font_noto_sans,
                     style = MaterialTheme.typography.displayLarge
                 )
@@ -113,7 +119,7 @@ fun RecordUI(modifier: Modifier = Modifier) {
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 RecordImageView(
-                    recordState = mp3Recorder.state,
+                    recordState = mp3Recorder.recorderState,
                     modifier = Modifier.size(64.dp)
                 ) {
                     mp3Recorder.startOrPause(file)
@@ -130,6 +136,23 @@ fun RecordUI(modifier: Modifier = Modifier) {
             }
         }
     }
+
+    //结束组合的是要需要：结束录音
+    DisposableEffect(mp3Recorder) {
+        val lifecycleObserver = LifecycleEventObserver { _, event ->
+            when (event) {
+                ON_STOP -> mp3Recorder.pause()
+            }
+        }
+
+        lifecycleOwner.lifecycle.addObserver(lifecycleObserver)
+        onDispose {
+            Log.i("onDispose","recordStateInfo destroy")
+            lifecycleOwner.lifecycle.removeObserver(lifecycleObserver)
+            mp3Recorder.destroy()
+        }
+    }
+
 }
 
 @Composable
@@ -149,10 +172,10 @@ fun CompleteImage(modifier: Modifier = Modifier, onClick: () -> Unit) {
 }
 
 @Composable
-fun RecordImageView(recordState: RecorderState, modifier: Modifier = Modifier, onClick: () -> Unit) {
+fun RecordImageView(recordState: MutableState<RecorderState>, modifier: Modifier = Modifier, onClick: () -> Unit) {
 
     val painterResource = painterResource(
-        when (recordState) {
+        when (recordState.value) {
             is RecordError -> R.mipmap.icon_start_record
             RecordIng -> R.mipmap.icon_record_pause_2
             RecordPause -> R.mipmap.icon_start_record
@@ -171,7 +194,6 @@ fun RecordImageView(recordState: RecorderState, modifier: Modifier = Modifier, o
             })
 
 }
-
 
 fun formatSeconds4(seconds: Long): String {
     val secondsx = seconds % 1000

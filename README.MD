@@ -13,23 +13,6 @@ compose_version = '1.2.0-alpha07'
    }
 ```
 
-### 录制时间
-```
-Text(
-  text = formatSeconds4(mp3Recorder.recTime),
-)
-```
-
-### 录音状态
-```
-mp3Recorder.state
-```
-
-### 背景音乐的状态
-```
-mp3Recorder.state
-```
-
 ## 相关参数
 ```
     val recorderState: MutableState<RecorderState>, //录音状态
